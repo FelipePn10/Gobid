@@ -2,7 +2,10 @@
  
  ## Algumas tecnologias utilizadas: 
    SKRC, 
-   Tern, 
+   Tern,
+   Chi,
+   Scs,
+   Pgx,
    Docker 
    e uma nova chamada R para live reloading. 
  
