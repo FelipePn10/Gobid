@@ -7,6 +7,7 @@ package pgstore
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -14,14 +15,14 @@ import (
 
 const createdProduct = `-- name: CreatedProduct :one
 INSERT INTO products (
-    seller_id, product_name, description, baseprice, auction_end
+    product_name, seller_id, description, baseprice, auction_end
 ) VALUES ($1, $2, $3, $4, $5)
 RETURNING id
 `
 
 type CreatedProductParams struct {
-	SellerID    uuid.UUID `json:"seller_id"`
 	ProductName string    `json:"product_name"`
+	SellerID    uuid.UUID `json:"seller_id"`
 	Description string    `json:"description"`
 	Baseprice   float64   `json:"baseprice"`
 	AuctionEnd  time.Time `json:"auction_end"`
@@ -29,8 +30,8 @@ type CreatedProductParams struct {
 
 func (q *Queries) CreatedProduct(ctx context.Context, arg CreatedProductParams) (uuid.UUID, error) {
 	row := q.db.QueryRow(ctx, createdProduct,
-		arg.SellerID,
 		arg.ProductName,
+		arg.SellerID,
 		arg.Description,
 		arg.Baseprice,
 		arg.AuctionEnd,
@@ -38,4 +39,51 @@ func (q *Queries) CreatedProduct(ctx context.Context, arg CreatedProductParams) 
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err
+}
+
+const deleteProduct = `-- name: DeleteProduct :exec
+DELETE FROM products
+WHERE id = $1 AND seller_id = $2
+`
+
+type DeleteProductParams struct {
+	ID       uuid.UUID `json:"id"`
+	SellerID uuid.UUID `json:"seller_id"`
+}
+
+func (q *Queries) DeleteProduct(ctx context.Context, arg DeleteProductParams) error {
+	_, err := q.db.Exec(ctx, deleteProduct, arg.ID, arg.SellerID)
+	return err
+}
+
+const updateProduct = `-- name: UpdateProduct :exec
+UPDATE products
+SET
+    product_name = COALESCE($3, product_name),
+    description = COALESCE($4, description),
+    baseprice = COALESCE($5, baseprice),
+    auction_end = COALESCE($6, auction_end)
+WHERE id = $1 AND seller_id = $2
+`
+
+// Supondo que pgstore.UpdateProductParams tenha esses tipos
+type UpdateProductParams struct {
+	ID          uuid.UUID
+	SellerID    uuid.UUID
+	ProductName sql.NullString
+	Description sql.NullString
+	Baseprice   sql.NullFloat64
+	AuctionEnd  sql.NullTime
+}
+
+func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) error {
+	_, err := q.db.Exec(ctx, updateProduct,
+		arg.ID,
+		arg.SellerID,
+		arg.ProductName,
+		arg.Description,
+		arg.Baseprice,
+		arg.AuctionEnd,
+	)
+	return err
 }
