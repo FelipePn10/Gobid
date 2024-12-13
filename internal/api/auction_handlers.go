@@ -37,6 +37,15 @@ func (api *Api) handlerSubscribeUsertoAuction(w http.ResponseWriter, r *http.Req
 		})
 		return
 	}
+	api.AuctionLobby.Lock()
+	room, ok := api.AuctionLobby.Rooms[productId]
+	api.AuctionLobby.Unlock()
+	if !ok {
+		jsonutils.EncodeJson(w, r, http.StatusBadRequest, map[string]any{
+			"message": "the auction has ended",
+		})
+		return
+	}
 	conn, err := api.WsUpgrader.Upgrade(w, r, nil)
 	if err != nil {
 		jsonutils.EncodeJson(w, r, http.StatusInternalServerError, map[string]any{
@@ -44,5 +53,9 @@ func (api *Api) handlerSubscribeUsertoAuction(w http.ResponseWriter, r *http.Req
 		})
 		return
 	}
+	client := services.NewClient(room, conn, userId)
 
+	room.Register <- client
+	go client.ReadEventLoop()
+	go client.WriteEventLoop()
 }
