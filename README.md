@@ -2,7 +2,7 @@
 
 Gobid é uma plataforma de leilão online inspirada no eBay, projetada para facilitar a compra e venda de itens através de um sistema de lances. Construído em Go (Golang), o projeto visa oferecer uma experiência de leilão digital eficiente, segura e escalável.
 
-###Funcionalidades Principais
+### Funcionalidades Principais
 
 #### Sistema de Lances: Usuários podem fazer lances em itens listados, com funcionalidades como lances automáticos e temporizadores de leilão.
 #### Gestão de Usuários: Registro, login, perfis de usuário com histórico de lances e vendas.
