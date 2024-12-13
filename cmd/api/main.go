@@ -10,6 +10,7 @@ import (
 	"github.com/alexedwards/scs/v2"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/gorilla/websocket"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"net/http"
@@ -52,6 +53,23 @@ func main() {
 		UserService:    services.NewUserService(pool),
 		ProductService: services.NewProductsService(pool),
 		Sessions:       s,
+		WsUpgrader: websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				allowedOrigins := []string{
+					"http://localhost:3080",
+				}
+				origin := r.Header.Get("Origin")
+				for _, allowedOrigin := range allowedOrigins {
+					if origin == allowedOrigin {
+						return true
+					}
+				}
+				return false
+			},
+		},
+		AuctionLobby: services.AuctionLobby{
+			Rooms: make(map[uuid.UUID]*services.AuctionRoom),
+		},
 	}
 	api.BindRoutes()
 

@@ -7,7 +7,6 @@ package pgstore
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -56,6 +55,28 @@ func (q *Queries) DeleteProduct(ctx context.Context, arg DeleteProductParams) er
 	return err
 }
 
+const getProductById = `-- name: GetProductById :one
+SELECT id, seller_id, product_name, description, baseprice, auction_end, is_sold, created_at, updated_at FROM products
+WHERE id = $1
+`
+
+func (q *Queries) GetProductById(ctx context.Context, id uuid.UUID) (Product, error) {
+	row := q.db.QueryRow(ctx, getProductById, id)
+	var i Product
+	err := row.Scan(
+		&i.ID,
+		&i.SellerID,
+		&i.ProductName,
+		&i.Description,
+		&i.Baseprice,
+		&i.AuctionEnd,
+		&i.IsSold,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const updateProduct = `-- name: UpdateProduct :exec
 UPDATE products
 SET
@@ -66,14 +87,13 @@ SET
 WHERE id = $1 AND seller_id = $2
 `
 
-// Supondo que pgstore.UpdateProductParams tenha esses tipos
 type UpdateProductParams struct {
-	ID          uuid.UUID
-	SellerID    uuid.UUID
-	ProductName sql.NullString
-	Description sql.NullString
-	Baseprice   sql.NullFloat64
-	AuctionEnd  sql.NullTime
+	ID          uuid.UUID `json:"id"`
+	SellerID    uuid.UUID `json:"seller_id"`
+	ProductName string    `json:"product_name"`
+	Description string    `json:"description"`
+	Baseprice   float64   `json:"baseprice"`
+	AuctionEnd  time.Time `json:"auction_end"`
 }
 
 func (q *Queries) UpdateProduct(ctx context.Context, arg UpdateProductParams) error {

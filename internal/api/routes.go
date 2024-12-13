@@ -33,6 +33,7 @@ func (api *Api) BindRoutes() {
 					r.Post("/", api.handleCreateProduct)
 					r.Put("/{id}", api.handleUpdateProduct)
 					r.Delete("/{id}", api.handleDeleteProduct)
+					r.Get("/ws/subscribe/{product_id}", api.handlerSubscribeUsertoAuction)
 				})
 			})
 		})

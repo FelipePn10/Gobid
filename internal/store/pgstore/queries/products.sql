@@ -16,3 +16,7 @@ WHERE id = $1 AND seller_id = $2;
 -- name: DeleteProduct :exec
 DELETE FROM products
 WHERE id = $1 AND seller_id = $2;
+
+-- name: GetProductById :one
+SELECT * FROM products
+WHERE id = $1;
